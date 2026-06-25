@@ -17,9 +17,10 @@
  * under the License.
  */
 
-import { Page, Download } from '@playwright/test';
+import { Page, Download, Locator } from '@playwright/test';
 import { Menu } from '../components/core';
 import { gotoWithRetry } from '../helpers/navigation';
+import { html5DragAndDrop } from '../helpers/dnd';
 import { TIMEOUT } from '../utils/constants';
 
 /**
@@ -33,6 +34,16 @@ export class DashboardPage {
     DASHBOARD_MENU_TRIGGER: '[data-test="actions-trigger"]',
     // The header-actions-menu is the data-test for the dropdown menu content
     HEADER_ACTIONS_MENU: '[data-test="header-actions-menu"]',
+    EDIT_BUTTON: '[data-test="edit-dashboard-button"]',
+    BUILDER_PANE: '[data-test="dashboard-builder-sidepane"]',
+    CHARTS_SEARCH: '[data-test="dashboard-charts-filter-search-input"]',
+    CHART_CARD: '[data-test="chart-card"]',
+    GRID_CONTENT: '[data-test="grid-content"]',
+    EMPTY_DROPTARGET: '[data-test="grid-content"] .empty-droptarget',
+    NEW_COMPONENT: '[data-test="new-component"]',
+    CHART_HOLDER: '[data-test="dashboard-component-chart-holder"]',
+    DELETE_COMPONENT: '[data-test="dashboard-delete-component-button"]',
+    MARKDOWN_EDITOR: '[data-test="dashboard-markdown-editor"]',
   } as const;
 
   constructor(page: Page) {
@@ -125,5 +136,90 @@ export class DashboardPage {
     const downloadPromise = this.page.waitForEvent('download');
     await menu.selectSubmenuItem('Download', optionText);
     return downloadPromise;
+  }
+
+  /**
+   * Enter dashboard edit mode and wait for the builder side pane to appear.
+   */
+  async enterEditMode(): Promise<void> {
+    await this.page.click(DashboardPage.SELECTORS.EDIT_BUTTON);
+    await this.page.waitForSelector(DashboardPage.SELECTORS.BUILDER_PANE, {
+      state: 'visible',
+    });
+  }
+
+  /**
+   * Switch the builder side pane to one of its tabs.
+   * @param tab - 'Charts' (existing slices) or 'Layout elements' (new components)
+   */
+  async openBuilderTab(tab: 'Charts' | 'Layout elements'): Promise<void> {
+    await this.page
+      .locator(`${DashboardPage.SELECTORS.BUILDER_PANE} .ant-tabs-tab`, {
+        hasText: tab,
+      })
+      .click();
+  }
+
+  /**
+   * Locator for chart-holder components currently placed on the grid.
+   */
+  chartHolders(): Locator {
+    return this.page.locator(DashboardPage.SELECTORS.CHART_HOLDER);
+  }
+
+  /**
+   * Drag an existing chart from the Charts pane onto the dashboard grid.
+   * Requires edit mode to be active.
+   * @param sliceName - The slice name to search for and drag
+   */
+  async addChartByName(sliceName: string): Promise<void> {
+    await this.openBuilderTab('Charts');
+    await this.page.fill(DashboardPage.SELECTORS.CHARTS_SEARCH, sliceName);
+    const card = this.page
+      .locator(DashboardPage.SELECTORS.CHART_CARD)
+      .filter({ hasText: sliceName })
+      .first();
+    await card.waitFor({ state: 'visible' });
+    await html5DragAndDrop(this.page, card, this.dropTarget());
+  }
+
+  /**
+   * Drag a new Layout element (by its label) onto the dashboard grid.
+   * Requires edit mode to be active.
+   * @param label - The new-component label, e.g. 'Text / Markdown'
+   */
+  async addLayoutElement(label: string): Promise<void> {
+    await this.openBuilderTab('Layout elements');
+    const source = this.page
+      .locator(DashboardPage.SELECTORS.NEW_COMPONENT)
+      .filter({ hasText: label })
+      .first();
+    await source.waitFor({ state: 'visible' });
+    await html5DragAndDrop(this.page, source, this.dropTarget());
+  }
+
+  /**
+   * The grid drop target. Prefers the empty droptarget (empty grid) and falls
+   * back to the grid content container.
+   */
+  private dropTarget(): Locator {
+    return this.page.locator(DashboardPage.SELECTORS.EMPTY_DROPTARGET).first();
+  }
+
+  /**
+   * Hover a placed chart-holder and click its delete button (edit mode).
+   * @param index - Which chart holder to delete (default 0)
+   */
+  async deleteChartHolder(index = 0): Promise<void> {
+    const holder = this.chartHolders().nth(index);
+    await holder.hover();
+    await holder.locator(DashboardPage.SELECTORS.DELETE_COMPONENT).click();
+  }
+
+  /**
+   * Locator for markdown editor components on the grid.
+   */
+  markdownEditors(): Locator {
+    return this.page.locator(DashboardPage.SELECTORS.MARKDOWN_EDITOR);
   }
 }
