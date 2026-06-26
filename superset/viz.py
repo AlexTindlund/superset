@@ -586,8 +586,7 @@ class BaseViz:  # pylint: disable=too-many-public-methods
                     is_loaded = True
                     current_app.config["STATS_LOGGER"].incr("loaded_from_cache")
                 except Exception as ex:  # pylint: disable=broad-except
-                    logger.exception(ex)
-                    logger.error(
+                    logger.warning(
                         "Error reading cache: %s",
                         utils.error_msg_from_exception(ex),
                         exc_info=True,

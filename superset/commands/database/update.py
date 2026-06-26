@@ -113,7 +113,11 @@ class UpdateDatabaseCommand(BaseCommand):
                 db_connection=database,
             ).run()
         except (OAuth2RedirectError, MissingOAuth2TokenError):
-            pass
+            logger.warning(
+                "Skipping permission sync for database %s due to OAuth2 token issue",
+                self._model_id,
+                exc_info=True,
+            )
 
         return database
 

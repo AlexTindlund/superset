@@ -27,6 +27,7 @@ from typing import Any, Callable, cast
 from flask import (
     abort,
     current_app as app,
+    flash,
     g,
     redirect,
     Response,
@@ -688,27 +689,36 @@ class DeleteMixin:  # pylint: disable=too-few-public-methods
         try:
             self.pre_delete(item)
         except Exception as ex:  # pylint: disable=broad-except
-            logger.error("Pre-delete error: %s", str(ex))
-        else:
-            view_menu = security_manager.find_view_menu(item.get_perm())
-            pvs = (
-                db.session.query(security_manager.permissionview_model)
-                .filter_by(view_menu=view_menu)
-                .all()
+            logger.error(
+                "Pre-delete failed for %s (pk=%s): %s",
+                type(item).__name__,
+                primary_key,
+                ex,
+                exc_info=True,
             )
-
-            if self.datamodel.delete(item):
-                self.post_delete(item)
-
-                for pv in pvs:
-                    db.session.delete(pv)
-
-                if view_menu:
-                    db.session.delete(view_menu)
-
-                db.session.commit()  # pylint: disable=consider-using-transaction
-
+            flash(str(ex), "danger")
             self.update_redirect()
+            return
+
+        view_menu = security_manager.find_view_menu(item.get_perm())
+        pvs = (
+            db.session.query(security_manager.permissionview_model)
+            .filter_by(view_menu=view_menu)
+            .all()
+        )
+
+        if self.datamodel.delete(item):
+            self.post_delete(item)
+
+            for pv in pvs:
+                db.session.delete(pv)
+
+            if view_menu:
+                db.session.delete(view_menu)
+
+            db.session.commit()  # pylint: disable=consider-using-transaction
+
+        self.update_redirect()
 
     @action(
         "muldelete", __("Delete"), __("Delete all Really?"), "fa-trash", single=False
@@ -720,7 +730,14 @@ class DeleteMixin:  # pylint: disable=too-few-public-methods
             try:
                 self.pre_delete(item)
             except Exception as ex:  # pylint: disable=broad-except
-                logger.error("Pre-delete error: %s", str(ex))
+                logger.error(
+                    "Pre-delete failed for %s (pk=%s): %s",
+                    type(item).__name__,
+                    item.id,
+                    ex,
+                    exc_info=True,
+                )
+                flash(str(ex), "danger")
             else:
                 self._delete(item.id)
         self.update_redirect()

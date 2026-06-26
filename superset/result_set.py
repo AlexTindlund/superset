@@ -271,7 +271,12 @@ class SupersetResultSet:
                                     type=pa.timestamp("ns", tz=tz),
                                 )
                         except Exception as ex:  # pylint: disable=broad-except
-                            logger.exception(ex)
+                            logger.warning(
+                                "Failed to convert timezone for column %s: %s",
+                                column,
+                                ex,
+                                exc_info=True,
+                            )
 
         if not pa_data:
             column_names = []
@@ -292,7 +297,11 @@ class SupersetResultSet:
                 if deduped_cursor_desc
             }
         except Exception as ex:  # pylint: disable=broad-except
-            logger.exception(ex)
+            logger.warning(
+                "Failed to build type dict from cursor description: %s",
+                ex,
+                exc_info=True,
+            )
 
     @staticmethod
     def convert_pa_dtype(pa_dtype: pa.DataType) -> Optional[str]:
