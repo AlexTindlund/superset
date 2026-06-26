@@ -175,6 +175,13 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
 
         # 4. Execute query
         with event_logger.log_context(action="mcp.execute_sql.query_execution"):
+            # nosemgrep: sql-injection-db-cursor-execute
+            # SQL Lab's purpose is to execute user-authored SQL for principals
+            # who hold the sql_lab permission. request.sql is the user's
+            # intended query, not untrusted input being injected into a wrapper.
+            # Security is enforced by RBAC (tool decorator), DDL blocking above,
+            # and Database.execute()'s own pipeline (RLS, disallowed-function
+            # checks, DML permission, timeout).
             result = database.execute(request.sql, options)
 
         # 5. Convert to MCP response format
