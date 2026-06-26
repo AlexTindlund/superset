@@ -45,15 +45,6 @@ class MultiCatalogDisabledValidationError(ValidationError):
         )
 
 
-class DatabaseNotFoundValidationError(ValidationError):
-    """
-    Marshmallow validation error for database does not exist
-    """
-
-    def __init__(self) -> None:
-        super().__init__([_("Database does not exist")], field_name="database")
-
-
 class DatasetExistsValidationError(ValidationError):
     """
     Marshmallow validation error for dataset already exists
@@ -139,11 +130,6 @@ class TableNotFoundValidationError(ValidationError):
             ],
             field_name="table",
         )
-
-
-class OwnersNotFoundValidationError(ValidationError):
-    def __init__(self) -> None:
-        super().__init__([_("Owners are invalid")], field_name="owners")
 
 
 class DatasetDataAccessIsNotAllowed(ValidationError):  # noqa: N818

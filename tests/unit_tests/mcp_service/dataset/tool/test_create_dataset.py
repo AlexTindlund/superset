@@ -25,13 +25,13 @@ from fastmcp import Client
 from fastmcp.exceptions import ToolError
 
 from superset.commands.dataset.exceptions import (
-    DatabaseNotFoundValidationError,
     DatasetCreateFailedError,
     DatasetDataAccessIsNotAllowed,
     DatasetExistsValidationError,
     DatasetInvalidError,
     TableNotFoundValidationError,
 )
+from superset.commands.exceptions import DatabaseNotFoundValidationError
 from superset.mcp_service.app import mcp
 from superset.sql.parse import Table
 from superset.utils import json

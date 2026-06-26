@@ -23,7 +23,7 @@ from marshmallow.validate import Length, ValidationError
 from superset import security_manager
 from superset.tags.models import TagType
 from superset.utils import json
-from superset.utils.schema import validate_external_url
+from superset.utils.schema import validate_external_url, validate_json
 
 get_delete_ids_schema = {"type": "array", "items": {"type": "integer"}}
 get_export_ids_schema = {"type": "array", "items": {"type": "integer"}}
@@ -96,13 +96,6 @@ openapi_spec_methods_override = {
         "get": {"description": "Get a list of all possible owners for a dashboard."}
     },
 }
-
-
-def validate_json(value: Union[bytes, bytearray, str]) -> None:
-    try:
-        json.validate_json(value)
-    except json.JSONDecodeError as ex:
-        raise ValidationError("JSON not valid") from ex
 
 
 def validate_json_metadata(value: Union[bytes, bytearray, str]) -> None:

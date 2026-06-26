@@ -22,7 +22,6 @@ from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 
 from superset.commands.dataset.exceptions import (
-    DatabaseNotFoundValidationError,
     DatasetExistsValidationError,
     DatasetForbiddenError,
     DatasetInvalidError,
@@ -35,7 +34,10 @@ from superset.commands.dataset.update import (
     UpdateDatasetCommand,
     validate_folders,
 )
-from superset.commands.exceptions import OwnersNotFoundValidationError
+from superset.commands.exceptions import (
+    DatabaseNotFoundValidationError,
+    OwnersNotFoundValidationError,
+)
 from superset.datasets.schemas import FolderSchema
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import SupersetSecurityException

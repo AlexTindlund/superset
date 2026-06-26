@@ -14,12 +14,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Union
-
-from marshmallow import fields, Schema, ValidationError
+from marshmallow import fields, Schema
 from marshmallow.validate import Length
 
-from superset.utils import json
+from superset.utils.schema import validate_json
 
 openapi_spec_methods_override = {
     "get": {"get": {"summary": "Get an annotation layer"}},
@@ -46,13 +44,6 @@ annotation_layer = "The annotation layer id"
 annotation_short_descr = "A short description"
 annotation_long_descr = "A long description"
 annotation_json_metadata = "JSON metadata"
-
-
-def validate_json(value: Union[bytes, bytearray, str]) -> None:
-    try:
-        json.validate_json(value)
-    except json.JSONDecodeError as ex:
-        raise ValidationError("JSON not valid") from ex
 
 
 class AnnotationPostSchema(Schema):

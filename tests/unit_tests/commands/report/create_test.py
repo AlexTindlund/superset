@@ -22,9 +22,9 @@ import pytest
 from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 
+from superset.commands.exceptions import DatabaseNotFoundValidationError
 from superset.commands.report.create import CreateReportScheduleCommand
 from superset.commands.report.exceptions import (
-    DatabaseNotFoundValidationError,
     ReportScheduleAlertRequiredDatabaseValidationError,
     ReportScheduleInvalidError,
 )

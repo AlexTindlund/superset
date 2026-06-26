@@ -105,6 +105,17 @@ class ImportFailedError(CommandException):
     message = "Import failed for an unknown reason"
 
 
+class DatabaseNotFoundValidationError(ValidationError):
+    """
+    Marshmallow validation error for database does not exist
+    """
+
+    status = 422
+
+    def __init__(self) -> None:
+        super().__init__([_("Database does not exist")], field_name="database")
+
+
 class OwnersNotFoundValidationError(ValidationError):
     status = 422
 

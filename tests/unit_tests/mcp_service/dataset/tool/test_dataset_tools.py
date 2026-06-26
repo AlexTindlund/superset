@@ -1936,10 +1936,8 @@ async def test_create_virtual_dataset_success(mcp_server: object) -> None:
 async def test_create_virtual_dataset_db_not_found(mcp_server: object) -> None:
     """When the database ID does not exist, CreateDatasetCommand raises
     DatasetInvalidError containing DatabaseNotFoundValidationError."""
-    from superset.commands.dataset.exceptions import (
-        DatabaseNotFoundValidationError,
-        DatasetInvalidError,
-    )
+    from superset.commands.dataset.exceptions import DatasetInvalidError
+    from superset.commands.exceptions import DatabaseNotFoundValidationError
 
     invalid_exc = DatasetInvalidError()
     invalid_exc.append(DatabaseNotFoundValidationError())
