@@ -490,7 +490,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
             except ValueError as e:
                 reason = "Malformed token header"
                 _jwt_failure_reason.set(reason)
-                logger.debug("Malformed token header: %s", e)
+                logger.debug("Malformed token header: %s", _sanitize_for_log(e))
                 return None
 
             token_alg = header.get("alg")
@@ -580,7 +580,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
                     reason = "Token has expired (detected during decode)"
                 else:
                     reason = "Token decode failed"
-                    logger.debug("Token decode failed: %s", e)
+                    logger.debug("Token decode failed: %s", _sanitize_for_log(e))
                 _jwt_failure_reason.set(reason)
                 return None
 
@@ -700,8 +700,8 @@ class DetailedJWTVerifier(MCPJWTVerifier):
                     _jwt_failure_reason.set(reason)
                     logger.debug(
                         "Missing required scopes: %s. Token has: %s",
-                        missing,
-                        token_scopes,
+                        _sanitize_for_log(missing),
+                        _sanitize_for_log(token_scopes),
                     )
                     return None
 
@@ -735,7 +735,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
         ) as e:
             reason = "Token validation failed"
             _jwt_failure_reason.set(reason)
-            logger.debug("Token validation failed: %s", e)
+            logger.debug("Token validation failed: %s", _sanitize_for_log(e))
             return None
 
     def get_middleware(self) -> list[Any]:
