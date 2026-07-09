@@ -174,8 +174,15 @@ def downgrade_comparison_params(slice_params: dict[str, Any]) -> dict[str, Any]:
             new_until_date = start_date_offset + timedelta(days=delta_days - 1)
             comparator_str = f"{start_date_offset.strftime('%Y-%m-%d')} : {new_until_date.strftime('%Y-%m-%d')}"  # noqa: E501
 
-            # Generate filterOptionName
-            random_string = md5(comparator_str.encode("utf-8")).hexdigest()  # noqa: S324
+            # Generate filterOptionName. MD5 here is a non-security deterministic
+            # id, not a cryptographic digest; usedforsecurity=False silences the
+            # scanner while preserving the exact output. The algorithm must NOT be
+            # changed to SHA-256: this migration has already run on live databases
+            # and the resulting filterOptionName values are persisted in chart
+            # params, so a different hash would break those historical rows.
+            random_string = md5(
+                comparator_str.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
             filter_option_name = f"filter_{random_string}"
 
             adhoc_custom[0] = {
