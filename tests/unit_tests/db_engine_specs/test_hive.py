@@ -155,6 +155,42 @@ def test_df_to_sql_escapes_like_wildcards(mocker: MockerFixture) -> None:
     assert "ESCAPE" in sql
 
 
+def test_df_to_sql_escapes_column_backticks(mocker: MockerFixture, tmp_path) -> None:
+    """
+    Test that ``df_to_sql`` escapes backticks in DataFrame column names when
+    building the ``CREATE TABLE`` schema definition, so a column name sourced
+    from an uploaded file cannot break out of its backtick-quoted identifier.
+    """
+    import pandas as pd
+
+    from superset.db_engine_specs.hive import HiveEngineSpec
+    from superset.sql.parse import Table
+
+    mocker.patch("superset.db_engine_specs.hive.upload_to_s3", return_value="s3://x")
+    mocker.patch("superset.db_engine_specs.hive.pq")
+    mocker.patch("superset.db_engine_specs.hive.pa")
+    mocker.patch("superset.db_engine_specs.hive.g")
+    app_mock = mocker.patch("superset.db_engine_specs.hive.app")
+    app_mock.config = {
+        "UPLOAD_FOLDER": str(tmp_path),
+        "CSV_TO_HIVE_UPLOAD_DIRECTORY_FUNC": lambda *args, **kwargs: "prefix",
+    }
+
+    engine = mocker.MagicMock()
+    get_engine = mocker.patch.object(HiveEngineSpec, "get_engine")
+    get_engine.return_value.__enter__.return_value = engine
+
+    HiveEngineSpec.df_to_sql(
+        database=mocker.MagicMock(),
+        table=Table("my_table", "my_schema"),
+        df=pd.DataFrame({"evil` DROP": [1]}),
+        to_sql_kwargs={"if_exists": "replace"},
+    )
+
+    create_sql = str(engine.execute.call_args_list[-1][0][0])
+    assert "`evil`` DROP`" in create_sql
+
+
 def test_partition_query_escapes_identifiers() -> None:
     """
     Test that ``_partition_query`` correctly backtick-quotes table and schema names
