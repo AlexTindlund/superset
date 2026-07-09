@@ -65,7 +65,9 @@ logger = logging.getLogger(__name__)
         destructiveHint=True,
     ),
 )
-async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlResponse:
+async def execute_sql(  # noqa: C901
+    request: ExecuteSqlRequest, ctx: Context
+) -> ExecuteSqlResponse:
     """Execute SQL query against database using the unified Database.execute() API."""
     await ctx.info(
         "Starting SQL execution: database_id=%s, timeout=%s, limit=%s, schema=%s"
@@ -175,6 +177,16 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
 
         # 4. Execute query
         with event_logger.log_context(action="mcp.execute_sql.query_execution"):
+            # By design: SQL Lab executes the caller's own authored SQL. The
+            # user statement is the intended payload, not untrusted data spliced
+            # into a wrapper query -- it is never concatenated or string-formatted
+            # around other input. Before reaching the driver cursor,
+            # Database.execute() parses the SQL into an AST (SQLScript), applies
+            # RLS, row limits, disallowed-function/table checks, and DML gating,
+            # and this tool additionally enforces SQLLab RBAC and blocks
+            # destructive DDL. Parameterization is not applicable to arbitrary
+            # user SQL and would break the feature.
+            # nosemgrep: sql-injection-db-cursor-execute
             result = database.execute(request.sql, options)
 
         # 5. Convert to MCP response format
